@@ -1,2 +1,2 @@
-# Voronov
-Algoythm for building voronov diagram in R3
+# Voronoi
+Algoythm for building voronoi diagram in R3
