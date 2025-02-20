@@ -11,26 +11,19 @@ struct Point{
   
 };
 
-void points_bubble_sort (vector<Point>& points ){ 
+Point middle (Point p1, Point p2, Point p3){
 
-    for (int i=0;i<points.size()-1;i++){
-      for (int j=i+1;j<points.size();j++){
-        if (points[i].x>points[j].x || (points[i].x==points[j].x && points[i].y>points[j].y)){
-          swap(points[i], points[j]);
-        }
-      }
-    }#include <iostream>
-#include <vector>
-#include <algorithm>
-#include <cmath>
+    Point MID;
 
-using namespace std;
+    double D=2*(p1.x*(p2.y-p3.y)+p2.x*(p3.y-p1.y)+p3.x*(p1.y-p2.y));
 
-struct Point{
-  
-  double x,y;
-  
-};
+    MID.x=((p1.x**2+p1.y**2)*(p2.y-p3.y)+(p2.x**2+p2.y**2)*(p3.y-p1.y)+(p3.x**2+p3.y**2)*(p1.y-p2.y))/D;
+
+    MID.y=((p1.x**2+p1.y**2)*(p3.x-p2.x)+(p2.x**2+p2.y**2)*(p1.x-p3.x)+(p3.x**2+p3.y**2)*(p2.x-p1.x))/D;
+
+    return MID;
+    
+}
 
 void points_bubble_sort (vector<Point>& points ){ 
 
@@ -71,52 +64,6 @@ vector<std::vector<Point>> divideIntoTriplets(const vector<Point>& points) {
     return triplets;
 }
 
-
-
-int main() {
-
-  vector <Point> hull;
-
-  Point point;
-
-  while (cin>>point.x>>point.y){
-    
-    hull.push_back(point);
-    
-  }
-
-  points_bubble_sort (hull);
-
-  for(Point point: hull){
-    cout<<point.x<<" "<<point.y<<endl;
-  }
-
-  vector<vector<Point>> triplets = divideIntoTriplets(hull);
-
-  for (const auto& triplet : triplets) {
-    cout << "Triplet: ("
-    << triplet[0].x << ", " << triplet[0].y << "), ("
-    << triplet[1].x << ", " << triplet[1].y << "), ("
-    << triplet[2].x << ", " << triplet[2].y << ")\n";
-  }
-
-  return 0;
-}
-    
-}
-
-vector<vector<Point>> divideIntoTriplets(vector<Point>& points) {
-    vector<vector<Point>> triplets;
-
-    // Проходим по вектору точек с шагом 3
-    for (size_t i = 0; i + 2 < points.size(); i += 3) {
-        // Создаем систему из трех точек
-        vector<Point> triplet = { points[i], points[i + 1], points[i + 2] };
-        triplets.push_back(triplet);
-    }
-
-    return triplets;
-}
 
 
 int main() {
