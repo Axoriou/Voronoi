@@ -23,6 +23,19 @@ void points_bubble_sort (vector<Point>& points ){
     
 }
 
+vector<vector<Point>> divideIntoTriplets(vector<Point>& points) {
+    vector<vector<Point>> triplets;
+
+    // Проходим по вектору точек с шагом 3
+    for (size_t i = 0; i + 2 < points.size(); i += 3) {
+        // Создаем систему из трех точек
+        vector<Point> triplet = { points[i], points[i + 1], points[i + 2] };
+        triplets.push_back(triplet);
+    }
+
+    return triplets;
+}
+
 
 int main() {
 
@@ -40,6 +53,15 @@ int main() {
 
   for(Point point: hull){
     cout<<point.x<<" "<<point.y<<endl;
+  }
+
+  vector<vector<Point>> triplets = divideIntoTriplets(hull);
+
+  for (const auto& triplet : triplets) {
+    cout << "Triplet: ("
+    << triplet[0].x << ", " << triplet[0].y << "), ("
+    << triplet[1].x << ", " << triplet[1].y << "), ("
+    << triplet[2].x << ", " << triplet[2].y << ")\n";
   }
 
   return 0;
