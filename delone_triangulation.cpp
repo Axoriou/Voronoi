@@ -17,9 +17,9 @@ Point middle (Point p1, Point p2, Point p3){
 
     double D=2*(p1.x*(p2.y-p3.y)+p2.x*(p3.y-p1.y)+p3.x*(p1.y-p2.y));
 
-    MID.x=((p1.x**2+p1.y**2)*(p2.y-p3.y)+(p2.x**2+p2.y**2)*(p3.y-p1.y)+(p3.x**2+p3.y**2)*(p1.y-p2.y))/D;
+    MID.x=((pow(p1.x,2)+pow(p1.y,2))*(p2.y-p3.y)+(pow(p2.x,2)+pow(p2.y,2))*(p3.y-p1.y)+(pow(p3.x,2)+pow(p3.y,2))*(p1.y-p2.y))/D;
 
-    MID.y=((p1.x**2+p1.y**2)*(p3.x-p2.x)+(p2.x**2+p2.y**2)*(p1.x-p3.x)+(p3.x**2+p3.y**2)*(p2.x-p1.x))/D;
+    MID.y=((pow(p1.x,2)+pow(p1.y,2))*(p3.x-p2.x)+(pow(p2.x,2)+pow(p2.y,2))*(p1.x-p3.x)+(pow(p3.x,2)+pow(p3.y,2))*(p2.x-p1.x))/D;
 
     return MID;
     
