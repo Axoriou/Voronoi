@@ -1,7 +1,9 @@
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <algorithm>
 #include <cmath>
+#include <string>  // Подключение заголовочного файла для работы с строками
 
 using namespace std;
 
@@ -52,13 +54,37 @@ vector<vector<Point>> divideIntoTriplets(const vector<Point>& points) {
     return triplets;
 }
 
+// Функция для чтения точек из файла с пропуском первых двух строк
+bool readPointsFromFile(const string& filename, vector<Point>& points) {
+    ifstream inputFile(filename);
+
+    if (!inputFile) {
+        cerr << "Ошибка открытия файла: " << filename << endl;
+        return false;
+    }
+
+    // Пропускаем первые две строки
+    string line;
+    getline(inputFile, line);  // Пропускаем первую строку
+    getline(inputFile, line);  // Пропускаем вторую строку
+
+    // Считываем оставшиеся точки
+    Point point;
+    while (inputFile >> point.x >> point.y >> point.z) {
+        points.push_back(point);
+    }
+
+    inputFile.close();
+    return true;
+}
+
 int main() {
     vector<Point> points;
-    Point point;
 
-    // Считывание точек
-    while (cin >> point.x >> point.y >> point.z) {
-        points.push_back(point);
+    // Чтение точек из файла
+    string filename = "points.txt"; // Укажите путь к вашему файлу с точками
+    if (!readPointsFromFile(filename, points)) {
+        return 1;  // Если ошибка чтения файла, завершаем выполнение программы
     }
 
     // Сортировка точек
@@ -72,23 +98,15 @@ int main() {
     // Разделение точек на тройки
     vector<vector<Point>> triplets = divideIntoTriplets(points);
 
-    // Вывод триплетов
+    // Вывод триплетов (в том числе тех, в которых меньше 3 точек)
     for (const auto& triplet : triplets) {
-        if (triplet.size() == 3) {
-            cout << "Triplet: ("
-                << triplet[0].x << ", " << triplet[0].y << ", " << triplet[0].z << "), ("
-                << triplet[1].x << ", " << triplet[1].y << ", " << triplet[1].z << "), ("
-                << triplet[2].x << ", " << triplet[2].y << ", " << triplet[2].z << ")\n";
+        cout << "Triplet: ";
+        for (size_t i = 0; i < triplet.size(); ++i) {
+            cout << "("
+                << triplet[i].x << ", " << triplet[i].y << ", " << triplet[i].z << ")";
+            if (i < triplet.size() - 1) cout << ", ";
         }
-        else {
-            cout << "Triplet: ";
-            for (size_t i = 0; i < triplet.size(); ++i) {
-                cout << "("
-                    << triplet[i].x << ", " << triplet[i].y << ", " << triplet[i].z << ")";
-                if (i < triplet.size() - 1) cout << ", ";
-            }
-            cout << "\n";
-        }
+        cout << "\n";
     }
 
     return 0;
