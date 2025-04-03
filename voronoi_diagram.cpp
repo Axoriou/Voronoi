@@ -11,27 +11,30 @@
 using namespace Eigen;
 using namespace std;
 
-// Точка в 3D пространстве
+// Структура для представления 3D-точки
 struct Point3D {
     double x, y, z;
 
+    
     Point3D(double x = 0, double y = 0, double z = 0) : x(x), y(y), z(z) {}
 
+    // Оператор < для сортировки точек по координатам
     bool operator<(const Point3D& other) const {
-        if (abs(x - other.x) > 1e-9) return x < other.x;
-        if (abs(y - other.y) > 1e-9) return y < other.y;
+        if (x != other.x) return x < other.x;
+        if (y != other.y) return y < other.y;
         return z < other.z;
     }
 
+    // Оператор == для сравнения точек
     bool operator==(const Point3D& other) const {
-        return abs(x - other.x) < 1e-9 && abs(y - other.y) < 1e-9 && abs(z - other.z) < 1e-9;
+        return x == other.x && y == other.y && z == other.z;
     }
 };
 
-// Чтение рёбер Делоне из файла
+// Функция для чтения рёбер Делоне из файла
 vector<pair<Point3D, Point3D>> readDelaunayEdges(const string& filename) {
-    vector<pair<Point3D, Point3D>> edges;
-    ifstream file(filename);
+    vector<pair<Point3D, Point3D>> edges; // Вектор для хранения рёбер
+    ifstream file(filename); 
     if (!file.is_open()) {
         cerr << "Error opening file: " << filename << endl;
         return edges;
@@ -39,105 +42,108 @@ vector<pair<Point3D, Point3D>> readDelaunayEdges(const string& filename) {
 
     double x1, y1, z1, x2, y2, z2;
     while (file >> x1 >> y1 >> z1 >> x2 >> y2 >> z2) {
-        edges.emplace_back(Point3D(x1, y1, z1), Point3D(x2, y2, z2));
+        edges.emplace_back(Point3D(x1, y1, z1), Point3D(x2, y2, z2)); // Чтение рёбер и добавление в список
     }
-    return edges;
+    return edges; 
 }
 
-// Поиск всех тетраэдров в триангуляции Делоне
+// Функция для поиска тетраэдров, образованных точками и рёбрами
 set<vector<Point3D>> findTetrahedra(const set<Point3D>& points, const vector<pair<Point3D, Point3D>>& edges) {
-    set<vector<Point3D>> tetrahedra;
-    vector<Point3D> pointList(points.begin(), points.end());
-    map<Point3D, int> pointIndices;
+    set<vector<Point3D>> tetrahedra; // Множество для хранения уникальных тетраэдров
+    vector<Point3D> pointList(points.begin(), points.end()); // Преобразуем множество точек в вектор
+    map<Point3D, int> pointIndices; // мапа для индексации точек
+    int n = pointList.size(); // Количество точек
 
-    // Создаем индекс для каждой точки
-    for (int i = 0; i < pointList.size(); ++i) {
+    // Индексация точек
+    for (int i = 0; i < n; ++i) {
         pointIndices[pointList[i]] = i;
     }
 
-    // Создаем матрицу смежности
-    vector<vector<bool>> adjMatrix(pointList.size(), vector<bool>(pointList.size(), false));
+    // Создаём матрицу смежности, где true означает, что точки соединены рёбром
+    vector<vector<bool>> adjMatrix(n, vector<bool>(n, false));
     for (const auto& edge : edges) {
         int i = pointIndices[edge.first];
         int j = pointIndices[edge.second];
-        adjMatrix[i][j] = adjMatrix[j][i] = true;
+        adjMatrix[i][j] = adjMatrix[j][i] = true; // Заполняем матрицу смежности
     }
 
     // Оптимизированный поиск тетраэдров
-    for (int i = 0; i < pointList.size(); ++i) {
-        for (int j = i + 1; j < pointList.size(); ++j) {
-            if (!adjMatrix[i][j]) continue;
+    for (int i = 0; i < n; ++i) {
+        for (int j = i + 1; j < n; ++j) {
+            if (!adjMatrix[i][j]) continue; // Пропускаем, если между точками нет ребра
 
-            for (int k = j + 1; k < pointList.size(); ++k) {
-                if (!adjMatrix[i][k] || !adjMatrix[j][k]) continue;
+            for (int k = j + 1; k < n; ++k) {
+                if (!adjMatrix[i][k] || !adjMatrix[j][k]) continue; // Пропускаем, если ребра нет
 
-                for (int l = k + 1; l < pointList.size(); ++l) {
+                for (int l = k + 1; l < n; ++l) {
                     if (adjMatrix[i][l] && adjMatrix[j][l] && adjMatrix[k][l]) {
+                        // Если все 4 точки соединены рёбрами, то это тетраэдр
                         vector<Point3D> tet = { pointList[i], pointList[j], pointList[k], pointList[l] };
-                        sort(tet.begin(), tet.end());
-                        tetrahedra.insert(tet);
+                        sort(tet.begin(), tet.end()); // Сортируем точки для унификации
+                        tetrahedra.insert(tet); // Добавляем тетраэдр в множество
                     }
                 }
             }
         }
     }
 
-    return tetrahedra;
+    return tetrahedra; // Возвращаем найденные тетраэдры
 }
 
-// Вычисление центра описанной сферы (circumcenter) для тетраэдра
+// Функция для вычисления циркумцентра тетраэдра
 Point3D computeCircumcenter(const vector<Point3D>& tet) {
-    Matrix3d A;
-    Vector3d b;
-    const Point3D& p0 = tet[0];
+    Matrix3d A; // Матрица для системы линейных уравнений
+    Vector3d b; // Вектор правых частей уравнений
+    const Point3D& p0 = tet[0]; // Первая точка тетраэдра
 
+    // Заполнение матрицы и вектора для решения системы
     for (int i = 1; i < 4; ++i) {
         const Point3D& p = tet[i];
         A.row(i - 1) << p.x - p0.x, p.y - p0.y, p.z - p0.z;
-        b(i - 1) = 0.5 * (pow(p.x, 2) - pow(p0.x, 2) +
-            pow(p.y, 2) - pow(p0.y, 2) +
-            pow(p.z, 2) - pow(p0.z, 2));
+        b(i - 1) = (pow(p.x, 2) - pow(p0.x, 2) + pow(p.y, 2) - pow(p0.y, 2) + pow(p.z, 2) - pow(p0.z, 2));
+        b(i - 1) *= 0.5; // Разделяем на 2, чтобы решить систему
     }
 
-    Vector3d x = A.colPivHouseholderQr().solve(b);
-    Point3D center(x(0) + p0.x, x(1) + p0.y, x(2) + p0.z);
+    Vector3d x = A.colPivHouseholderQr().solve(b); // Решаем систему линейных уравнений
+    Point3D center(x(0) + p0.x, x(1) + p0.y, x(2) + p0.z); // Вычисляем центр
 
-    cout << "Circumcenter for tetrahedron: ("
-        << center.x << "," << center.y << "," << center.z << ")\n";
-    return center;
+    return center; 
 }
 
-// Построение рёбер диаграммы Вороного
+// Функция для построения рёбер диаграммы Вороного и записи их в файл
 void buildVoronoiEdges(const set<vector<Point3D>>& tetrahedra, const string& outputFilename) {
-    ofstream out(outputFilename);
+    ofstream out(outputFilename); 
     if (!out.is_open()) {
-        cerr << "Error opening output file: " << outputFilename << endl;
+        cerr << "Error opening output file: " << outputFilename << endl; 
         return;
     }
 
-    map<vector<Point3D>, Point3D> tetToCenter;
+    map<vector<Point3D>, Point3D> tetToCenter; // Карта для хранения циркумцентров тетраэдров
+    vector<vector<Point3D>> tetrahedraList(tetrahedra.begin(), tetrahedra.end()); // Список тетраэдров
+    int n = tetrahedraList.size(); 
 
-    // Вычисляем центры для всех тетраэдров
+    // Вычисление циркумцентров для всех тетраэдров
     for (const auto& tet : tetrahedra) {
         tetToCenter[tet] = computeCircumcenter(tet);
     }
 
-    // Соединяем центры соседних тетраэдров (имеющих общую грань)
-    for (auto it1 = tetrahedra.begin(); it1 != tetrahedra.end(); ++it1) {
-        const auto& tet1 = *it1;
-        const Point3D& c1 = tetToCenter[tet1];
+    // Проверка соседства тетраэдров
+    for (int i = 0; i < n; ++i) {
+        const auto& tet1 = tetrahedraList[i];
+        const Point3D& c1 = tetToCenter[tet1]; // Циркумцентр первого тетраэдра
 
-        for (auto it2 = next(it1); it2 != tetrahedra.end(); ++it2) {
-            const auto& tet2 = *it2;
+        for (int j = i + 1; j < n; ++j) {
+            const auto& tet2 = tetrahedraList[j];
+            int shared = 0; // Счётчик общих точек
 
-            // Проверяем, что тетраэдры имеют ровно 3 общие точки (общую грань)
-            int shared = 0;
+            // Проверяем, сколько общих точек у двух тетраэдров
             for (const auto& p : tet1) {
                 if (find(tet2.begin(), tet2.end(), p) != tet2.end()) {
                     shared++;
                 }
             }
 
+            // Если 3 общие точки, то тетраэдры соседние и нужно записать их циркумцентры
             if (shared == 3) {
                 const Point3D& c2 = tetToCenter[tet2];
                 out << c1.x << " " << c1.y << " " << c1.z << " "
@@ -147,39 +153,36 @@ void buildVoronoiEdges(const set<vector<Point3D>>& tetrahedra, const string& out
     }
 }
 
+
 int main() {
-    // Чтение рёбер Делоне
-    string inputFile = "delaunay_edges.txt";
-    auto edges = readDelaunayEdges(inputFile);
+    string inputFile = "delaunay_edges.txt"; 
+    auto edges = readDelaunayEdges(inputFile); 
 
     if (edges.empty()) {
-        cerr << "No edges read from file. Exiting." << endl;
+        cerr << "No edges read from file. Exiting." << endl; 
         return 1;
     }
 
-    // Извлекаем уникальные точки
-    set<Point3D> points;
+    set<Point3D> points; 
     for (const auto& edge : edges) {
-        points.insert(edge.first);
-        points.insert(edge.second);
+        points.insert(edge.first); 
+        points.insert(edge.second); 
     }
 
-    cout << "Points count: " << points.size() << endl;
+    cout << "Points count: " << points.size() << endl; 
     cout << "Edges count: " << edges.size() << endl;
 
-    // Находим все тетраэдры
-    auto tetrahedra = findTetrahedra(points, edges);
-    cout << "Found tetrahedra: " << tetrahedra.size() << endl;
+    auto tetrahedra = findTetrahedra(points, edges); 
+    cout << "Found tetrahedra: " << tetrahedra.size() << endl; 
 
     if (tetrahedra.empty()) {
-        cerr << "No tetrahedra found. Check input data." << endl;
+        cerr << "No tetrahedra found. Check input data." << endl; 
         return 1;
     }
 
-    // Строим диаграмму Вороного
-    string outputFile = "voronoi_edges.txt";
-    buildVoronoiEdges(tetrahedra, outputFile);
-    cout << "Voronoi diagram saved to: " << outputFile << endl;
+    string outputFile = "voronoi_edges.txt"; 
+    buildVoronoiEdges(tetrahedra, outputFile); 
+    cout << "Voronoi diagram saved to: " << outputFile << endl; 
 
-    return 0;
+    return 0; 
 }
