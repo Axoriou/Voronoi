@@ -1,3 +1,5 @@
+//используетсся библиотека eigen для линейной алгебры
+//вывод неправильный 
 #include <iostream>
 #include <fstream>
 #include <vector>
