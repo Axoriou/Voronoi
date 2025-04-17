@@ -9,11 +9,11 @@
 
 using namespace std;
 
-// Файлы
+
 string input_filename = "input.txt";
 string output_filename = "output.off";
 
-// Типы
+
 typedef CGAL::Exact_predicates_exact_constructions_kernel K;
 typedef CGAL::Delaunay_triangulation_3<K> Delaunay;
 typedef Delaunay::Point Point;
